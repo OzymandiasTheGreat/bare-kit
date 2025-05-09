@@ -1,4 +1,4 @@
-add_library(bare_kit SHARED)
+add_library(bare_kit STATIC)
 
 set_target_properties(
   bare_kit
@@ -57,4 +57,20 @@ if(IOS)
     PUBLIC
       "-framework UIKit"
   )
+endif()
+
+bare_platform(platform)
+bare_arch(arch)
+bare_simulator(simulator)
+
+if(simulator)
+  set(suffix "-simulator")
+else()
+  set(suffix)
+endif()
+
+if(IOS)
+  install(CODE "execute_process(COMMAND xcodebuild -create-xcframework -framework $<TARGET_BUNDLE_DIR:bare_kit> -output $<INSTALL_PREFIX>/${platform}-${arch}${suffix}/frameworks/BareKit.xcframework)")
+else()
+  install(TARGETS bare_kit FRAMEWORK DESTINATION "${platform}-${arch}${suffix}/frameworks")
 endif()
