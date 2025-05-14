@@ -33,5 +33,3 @@ target_link_libraries(
     log_static
     rlimit_static
 )
-
-link_bare_modules(bare_worklet WORKING_DIRECTORY ..)

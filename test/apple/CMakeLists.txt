@@ -10,6 +10,9 @@ foreach(test IN LISTS tests)
   target_link_libraries(
     ${test}
     PRIVATE
+      "-framework Foundation"
+      "-framework UserNotifications"
+      $<LINK_LIBRARY:WHOLE_ARCHIVE,js_static>
       bare_kit
   )
 
@@ -25,4 +28,3 @@ foreach(test IN LISTS tests)
     TIMEOUT 120
   )
 endforeach()
-

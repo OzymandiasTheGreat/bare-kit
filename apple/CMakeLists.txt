@@ -4,29 +4,9 @@ set_target_properties(
   bare_kit
   PROPERTIES
   OBJC_STANDARD 11
-  FRAMEWORK TRUE
-  OUTPUT_NAME BareKit
+  OUTPUT_NAME bare-kit
   PUBLIC_HEADER BareKit/BareKit.h
-
-  MACOSX_FRAMEWORK_BUNDLE_NAME "BareKit"
-  MACOSX_FRAMEWORK_IDENTIFIER "to.holepunch.bare.kit"
-  MACOSX_FRAMEWORK_BUNDLE_VERSION ${PROJECT_VERSION}
-  MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${PROJECT_VERSION}
 )
-
-if(IOS)
-  set_target_properties(
-    bare_kit
-    PROPERTIES
-    MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/BareKit/iOS.plist"
-  )
-else()
-  set_target_properties(
-    bare_kit
-    PROPERTIES
-    MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_CURRENT_LIST_DIR}/BareKit/macOS.plist"
-  )
-endif()
 
 target_sources(
   bare_kit
@@ -34,30 +14,24 @@ target_sources(
     BareKit/BareKit.h
   PRIVATE
     BareKit/BareKit.m
+    $<TARGET_OBJECTS:utf>
+    $<TARGET_OBJECTS:uv>
+    # $<TARGET_OBJECTS:log>
+    $<TARGET_OBJECTS:rlimit>
+    $<TARGET_OBJECTS:bare>
+    $<TARGET_OBJECTS:bare_worklet>
 )
 
 target_include_directories(
   bare_kit
   PUBLIC
     .
+    $<TARGET_PROPERTY:utf,INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:uv,INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:bare,INCLUDE_DIRECTORIES>
 )
 
-target_link_libraries(
-  bare_kit
-  PUBLIC
-    "-framework Foundation"
-    "-framework UserNotifications"
-  PUBLIC
-    bare_worklet
-)
-
-if(IOS)
-  target_link_libraries(
-    bare_kit
-    PUBLIC
-      "-framework UIKit"
-  )
-endif()
+link_bare_modules(bare_kit WORKING_DIRECTORY ..)
 
 bare_platform(platform)
 bare_arch(arch)
@@ -70,7 +44,25 @@ else()
 endif()
 
 if(IOS)
-  install(CODE "execute_process(COMMAND xcodebuild -create-xcframework -framework $<TARGET_BUNDLE_DIR:bare_kit> -output $<INSTALL_PREFIX>/${platform}-${arch}${suffix}/frameworks/BareKit.xcframework)")
+  # TODO: prob will have to screw whole xcframework thing and go with plain *.a
+  install(
+    CODE
+    "execute_process(COMMAND xcodebuild -create-xcframework -framework $<TARGET_BUNDLE_DIR:bare_kit> -output $<INSTALL_PREFIX>/${platform}-${arch}${suffix}/frameworks/BareKit.xcframework)"
+  )
 else()
-  install(TARGETS bare_kit FRAMEWORK DESTINATION "${platform}-${arch}${suffix}/frameworks")
+  install(
+    TARGETS
+      bare_kit
+    PUBLIC_HEADER DESTINATION
+      "${platform}-${arch}${suffix}/include"
+    ARCHIVE DESTINATION
+      "${platform}-${arch}${suffix}/lib"
+  )
+  install(
+    FILES
+      $<TARGET_FILE:js_static>
+      $<TARGET_FILE:v8>
+    DESTINATION
+      "${platform}-${arch}${suffix}/lib"
+  )
 endif()
